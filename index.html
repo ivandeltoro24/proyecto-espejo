@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DevTask - Enfoque Vanilla JS</title>
+  <title>DevTask - TypeScript</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <div class="app-container">
     <header>
-      <h1>DevTask 🚀 <small>Vanilla JS Edition</small></h1>
+      <h1>DevTask 🚀 <small>TypeScript Edition</small></h1>
     </header>
 
     <!-- Formulario para añadir nuevas tareas -->
@@ -35,7 +35,9 @@
 
     <!-- Contenedor Dinámico para las Tareas -->
     <main class="tasks-section">
-      <div id="loading-state" class="loading">Cargando tareas desde el servidor...</div>
+      <p id="estado-almacenamiento" class="storage-status" role="status" aria-live="polite">
+        Las tareas se guardan en este navegador.
+      </p>
       <ul id="lista-tareas">
         <!-- Las tareas generadas con JS se inyectarán aquí -->
       </ul>

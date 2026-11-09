@@ -6,21 +6,21 @@ export class TaskManager {
     inputTitulo;
     selectPrioridad;
     listaContenedor;
-    loadingState;
     filtrosContenedor;
+    estadoAlmacenamiento;
     constructor() {
         this.formulario = this.obtenerElemento('#form-tareas');
         this.inputTitulo = this.obtenerElemento('#input-titulo');
         this.selectPrioridad = this.obtenerElemento('#select-prioridad');
         this.listaContenedor = this.obtenerElemento('#lista-tareas');
-        this.loadingState = this.obtenerElemento('#loading-state');
         this.filtrosContenedor = this.obtenerElemento('.filter-section');
+        this.estadoAlmacenamiento = this.obtenerElemento('#estado-almacenamiento');
         this.tareas = this.cargarTareas();
         if (!this.filtrosContenedor.querySelector('.btn-filtro')) {
             throw new Error('No se encontraron botones de filtrado.');
         }
         this.registrarEventos();
-        void this.inicializar();
+        this.pintarTareas();
     }
     agregarTarea(titulo, prioridad) {
         const tituloLimpio = titulo.trim();
@@ -73,19 +73,16 @@ export class TaskManager {
         this.tareas = tareasActualizadas;
         this.pintarTareas();
     }
-    async inicializar() {
-        await new Promise(resolve => window.setTimeout(resolve, 1500));
-        this.loadingState.style.display = 'none';
-        this.pintarTareas();
-    }
     cargarTareas() {
-        const datosGuardados = localStorage.getItem(CLAVE_ALMACENAMIENTO);
+        const datosGuardados = window.localStorage.getItem(CLAVE_ALMACENAMIENTO);
         if (datosGuardados === null) {
-            return [
+            const tareasIniciales = [
                 { id: 1, titulo: 'Aprender la sintaxis de ES6', prioridad: 'Alta', completada: true },
                 { id: 2, titulo: 'Dominar la asincronía y Fetch', prioridad: 'Media', completada: false },
-                { id: 3, titulo: 'Migrar el proyecto a Angular', prioridad: 'Baja', completada: false }
+                { id: 3, titulo: 'Aplicar estilos responsivos a la aplicación', prioridad: 'Baja', completada: false }
             ];
+            this.guardarTareas(tareasIniciales);
+            return tareasIniciales;
         }
         const tareasGuardadas = JSON.parse(datosGuardados);
         if (!Array.isArray(tareasGuardadas) || !tareasGuardadas.every(TaskManager.esTarea)) {
@@ -101,7 +98,16 @@ export class TaskManager {
         return tareasGuardadas;
     }
     guardarTareas(tareas) {
-        localStorage.setItem(CLAVE_ALMACENAMIENTO, JSON.stringify(tareas));
+        try {
+            window.localStorage.setItem(CLAVE_ALMACENAMIENTO, JSON.stringify(tareas));
+            this.estadoAlmacenamiento.textContent = 'Cambios guardados en este navegador.';
+            this.estadoAlmacenamiento.classList.remove('error');
+        }
+        catch (error) {
+            this.estadoAlmacenamiento.textContent = 'No se pudieron guardar los cambios. Comprueba el almacenamiento del navegador.';
+            this.estadoAlmacenamiento.classList.add('error');
+            throw error;
+        }
     }
     generarId() {
         let id = Date.now();
@@ -113,18 +119,13 @@ export class TaskManager {
     registrarEventos() {
         this.formulario.addEventListener('submit', event => {
             event.preventDefault();
-            const titulo = this.inputTitulo.value.trim();
-            if (!titulo) {
-                this.inputTitulo.setCustomValidity('Escribe un título para la tarea.');
-                this.inputTitulo.reportValidity();
+            this.procesarFormulario();
+        });
+        this.inputTitulo.addEventListener('keydown', event => {
+            if (event.key !== 'Enter')
                 return;
-            }
-            const prioridad = this.selectPrioridad.value;
-            if (!TaskManager.esPrioridad(prioridad)) {
-                throw new Error(`La prioridad "${prioridad}" no es válida.`);
-            }
-            this.agregarTarea(titulo, prioridad);
-            this.formulario.reset();
+            event.preventDefault();
+            this.procesarFormulario();
         });
         this.formulario.addEventListener('input', event => {
             if (event.target === this.inputTitulo) {
@@ -162,6 +163,20 @@ export class TaskManager {
             }
             this.cambiarEstado(idTarea);
         });
+    }
+    procesarFormulario() {
+        const titulo = this.inputTitulo.value.trim();
+        if (!titulo) {
+            this.inputTitulo.setCustomValidity('Escribe un título para la tarea.');
+            this.inputTitulo.reportValidity();
+            return;
+        }
+        const prioridad = this.selectPrioridad.value;
+        if (!TaskManager.esPrioridad(prioridad)) {
+            throw new Error(`La prioridad "${prioridad}" no es válida.`);
+        }
+        this.agregarTarea(titulo, prioridad);
+        this.formulario.reset();
     }
     obtenerElemento(selector) {
         const elemento = document.querySelector(selector);

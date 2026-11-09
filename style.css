@@ -87,8 +87,11 @@ ul {
   opacity: 0.6;
 }
 
-.loading {
+.storage-status {
   text-align: center;
-  font-style: italic;
   color: #888;
+}
+
+.storage-status.error {
+  color: var(--high-priority);
 }
